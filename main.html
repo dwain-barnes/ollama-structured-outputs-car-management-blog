@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Management System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-8">Car Management System</h1>
+        
+        <!-- Input Form -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Add New Car</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Car Description</label>
+                    <textarea 
+                        id="carDescription" 
+                        class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        rows="3"
+                        placeholder="Describe the car (e.g., A red Tesla Model 3 registration number RF22 HTG)"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Or Upload Image</label>
+                    <input 
+                        type="file" 
+                        id="carImage"
+                        accept="image/*"
+                        class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex space-x-4">
+                    <button 
+                        onclick="addCarByDescription()"
+                        class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        Add Car by Description
+                    </button>
+                    <button 
+                        onclick="addCarByImage()"
+                        class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500">
+                        Analyze Image
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Display -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Car List</h2>
+            <div id="carList" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000';
+
+        async function addCarByDescription() {
+            const description = document.getElementById('carDescription').value;
+            if (!description) {
+                alert('Please enter a car description');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/cars`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ description })
+                });
+
+                if (!response.ok) throw new Error('Failed to add car');
+
+                const car = await response.json();
+                alert('Car added successfully!');
+                loadCars();
+                document.getElementById('carDescription').value = '';
+            } catch (error) {
+                alert('Error adding car: ' + error.message);
+            }
+        }
+
+        async function addCarByImage() {
+            const imageFile = document.getElementById('carImage').files[0];
+            if (!imageFile) {
+                alert('Please select an image');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', imageFile);
+
+            try {
+                const response = await fetch(`${API_URL}/cars/analyze-image`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Failed to analyze image');
+
+                const result = await response.json();
+                alert('Image analyzed successfully!');
+                loadCars();
+                document.getElementById('carImage').value = '';
+            } catch (error) {
+                alert('Error analyzing image: ' + error.message);
+            }
+        }
+
+        async function loadCars() {
+            try {
+                const response = await fetch(`${API_URL}/cars`);
+                const cars = await response.json();
+                
+                const carList = document.getElementById('carList');
+                carList.innerHTML = cars.map(car => `
+                    <div class="border border-gray-200 rounded-md p-4 hover:bg-gray-50">
+                        <div class="font-semibold">${car.make} ${car.model}</div>
+                        <div class="text-sm text-gray-600">
+                            ${car.year ? `Year: ${car.year}` : ''} 
+                            ${car.color ? `Color: ${car.color}` : ''}
+                        </div>
+                        ${car.features ? `
+                            <div class="text-sm text-gray-600">
+                                Features: ${car.features.join(', ')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading cars:', error);
+            }
+        }
+
+        // Load cars on page load
+        loadCars();
+    </script>
+</body>
+</html>
