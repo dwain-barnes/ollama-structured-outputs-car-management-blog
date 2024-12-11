@@ -1,5 +1,7 @@
 # Ollama Structured Outputs - Car Management Example
 
+![cms](cms.png)
+
 This repository demonstrates how to use **Ollama's Structured Outputs** to create a Car Management System. 
 The examples highlight extracting structured data from natural language descriptions and analysing car details from images using predefined JSON schemas.
 It was written as a blog. 
